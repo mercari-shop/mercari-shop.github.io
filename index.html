@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>メルカリ出品モニター</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1d1f23; --sub: #6b7280; --line: #e5e7eb;
+    --accent: #e4443a; --ok: #15803d; --warn: #b45309; --chip: #f1f2f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121417; --card: #1b1e23; --text: #ececf0; --sub: #9aa0aa; --line: #2b2f36; --chip: #262a31;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121417; --card: #1b1e23; --text: #ececf0; --sub: #9aa0aa; --line: #2b2f36; --chip: #262a31;
+  }
+  :root[data-theme="dark"] .alert { background: #3a2a14; color: #fcd9b6; border-color: #6b4a1e; }
+  :root[data-theme="dark"] .chip.new { background: #163b25; }
+  :root[data-theme="dark"] .chip.down { background: #4a1d1d; }
+  :root[data-theme="dark"] .chip.up { background: #4a3a10; }
+  #btnTheme { padding: 8px 10px; font-size: 15px; line-height: 1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; font-size: 14px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .meta { color: var(--sub); font-size: 12px; }
+  header .spacer { flex: 1; }
+  button { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  .alert { background: #fff4e5; color: #7c2d12; border: 1px solid #fcd9b6; border-radius: 10px; padding: 12px 14px; }
+  .wl { color: var(--sub); font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .wl a { color: inherit; }
+  .wl .warn { color: var(--warn); }
+  .alert code { background: rgba(0,0,0,.06); padding: 2px 6px; border-radius: 4px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .tile .label { color: var(--sub); font-size: 12px; }
+  .tile .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .tile .value small { font-size: 12px; font-weight: 400; color: var(--sub); margin-left: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 900px) { .grid2 { grid-template-columns: 2fr 1fr; } }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .panel h2 { font-size: 15px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .panel h2 .meta { color: var(--sub); font-size: 12px; font-weight: 400; }
+  .tabs { display: inline-flex; gap: 4px; }
+  .tabs button { padding: 5px 10px; border-radius: 6px; font-size: 13px; }
+  .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--sub); font-size: 12px; margin: -2px 0 8px; }
+  .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+  .sw.trading, tr.row-trading td { background: rgba(245, 158, 11, .14); }
+  .sw.sold, tr.row-sold td { background: rgba(34, 197, 94, .12); }
+  tr.row-trading td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
+  tr.row-sold td:first-child { box-shadow: inset 3px 0 0 #22c55e; }
+  .low { color: var(--accent); font-weight: 700; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .toolbar input, .toolbar select { border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 7px 10px; border-radius: 8px; font-size: 13px; }
+  .toolbar input { flex: 1; min-width: 160px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--sub); font-weight: 500; font-size: 12px; white-space: nowrap; cursor: pointer; user-select: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .item { display: flex; gap: 10px; align-items: center; min-width: 0; }
+  .item img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--chip); flex: none; }
+  .item .ph { width: 48px; height: 48px; border-radius: 6px; background: var(--chip); flex: none; }
+  .item a { color: inherit; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .item a:hover { text-decoration: underline; }
+  .item .sub { color: var(--sub); font-size: 11px; }
+  td small { color: var(--sub); font-size: 11px; }
+  .chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--chip); color: var(--sub); margin-left: 6px; white-space: nowrap; }
+  .chip.new { background: #dcfce7; color: var(--ok); }
+  .chip.down { background: #fee2e2; color: var(--accent); }
+  .chip.up { background: #fef3c7; color: var(--warn); }
+  .changes li { margin: 4px 0; }
+  .changes a { color: inherit; }
+  .changes ul { padding-left: 18px; margin: 6px 0 10px; }
+  .changes h3 { font-size: 13px; margin: 8px 0 2px; color: var(--sub); }
+  .ai { line-height: 1.7; }
+  .ai h2 { font-size: 14px; margin: 12px 0 4px; }
+  .ai ul { padding-left: 18px; margin: 4px 0; }
+  .empty { color: var(--sub); padding: 20px; text-align: center; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: r 1s linear infinite; vertical-align: -2px; }
+  @keyframes r { to { transform: rotate(360deg); } }
+  #gate[hidden] { display: none; }
+  #gate { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .gateBox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; width: 100%; max-width: 360px; display: grid; gap: 12px; text-align: center; }
+  .gateBox h2 { margin: 0; font-size: 18px; }
+  .gateBox p { margin: 0; color: var(--sub); }
+  .gateBox input { border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 12px; border-radius: 8px; font-size: 18px; text-align: center; letter-spacing: 2px; }
+  .gateBox button { padding: 12px; font-size: 15px; }
+  .gateErr { color: var(--accent); font-size: 13px; min-height: 1em; }
+  body.static #btnRefresh { display: none; }
+  body.static #tabs, body.static .tile.t-trading, body.static .tile.t-sold, body.static .legend .lg-status { display: none; }
+  body.static .tiles { grid-template-columns: 1fr; max-width: 240px; }
+  footer { color: var(--sub); font-size: 12px; text-align: center; padding: 8px 16px 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>メルカリ出品モニター</h1>
+  <div class="meta" id="meta">読み込み中…</div>
+  <div class="spacer"></div>
+  <button id="btnRefresh" class="primary">今すぐ更新</button>
+  <button id="btnTheme" title="背景色を切り替え">🌙</button>
+</header>
+
+<main>
+  <div id="alert" class="alert" hidden></div>
+
+  <div id="wlBar" class="wl" hidden></div>
+
+  <div class="tiles">
+    <div class="tile"><div class="label">出品中</div><div class="value" id="tCount">–<small>件</small></div></div>
+    <div class="tile t-trading"><div class="label">取引中</div><div class="value" id="tTrading">–<small>件</small></div></div>
+    <div class="tile t-sold"><div class="label">売却済み</div><div class="value" id="tSoldTotal">–<small>件</small></div></div>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2><span id="tabs" class="tabs"><button data-tab="all" class="on">すべて</button><button data-tab="items">出品中</button><button data-tab="trading">取引中</button><button data-tab="sold">売却済み</button></span> <span class="meta" id="listMeta"></span></h2>
+      <div class="legend"><span class="lg-status"><i class="sw trading"></i>取引中</span><span class="lg-status"><i class="sw sold"></i>売却済み</span><span><b class="low">赤い数字</b> = いいねが少ない（3以下）</span></div>
+      <div class="toolbar">
+        <input id="q" placeholder="商品名で絞り込み" />
+        <select id="sort">
+          <option value="updated">更新が新しい順</option>
+          <option value="likes">いいねが多い順</option>
+          <option value="views">閲覧が多い順</option>
+          <option value="recent">直近の閲覧が多い順</option>
+          <option value="oldest">出品が古い順</option>
+          <option value="priceDesc">価格が高い順</option>
+          <option value="priceAsc">価格が安い順</option>
+          <option value="name">名前順</option>
+        </select>
+      </div>
+      <div id="list"><div class="empty">まだデータがありません。「今すぐ更新」を押してください。</div></div>
+    </section>
+
+    <aside style="display:grid; gap:16px; align-content:start">
+      <section class="panel changes">
+        <h2>前回からの変化</h2>
+        <div id="changes"><div class="empty">変化なし</div></div>
+      </section>
+    </aside>
+  </div>
+</main>
+<footer id="footer"></footer>
+
+<script>window.__STATIC__={"encrypted":false,"listings":{"fetchedAt":"2026-10-31T06:12:20.882Z","source":"api","count":10,"totalPrice":978000,"items":[{"id":"m10210749208","name":"GUCCI GGジャカード ジップアップパーカー","price":280000,"status":"on_sale","statusLabel":"出品中","likes":6,"comments":0,"views":519,"recentViews":96,"category":"ナイロンジャケット","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m10210749208_1.jpg?1788074811","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m10210749208","createdAt":"2026-08-16T15:12:50.000Z","updatedAt":"2026-10-31T01:39:12.000Z","sheet":{"row":21,"id":"m10210749208","name":"Gucci　パーカー　GG柄","cost":"35万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m50222683038","name":"【美品】JIMMY CHOO パテントレザー パンプス レッド","price":18000,"status":"on_sale","statusLabel":"出品中","likes":9,"comments":0,"views":146,"recentViews":8,"category":"ハイヒール・パンプス","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m50222683038_1.jpg?1786699600","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m50222683038","createdAt":"2026-08-14T09:26:40.000Z","updatedAt":"2026-10-31T01:38:46.000Z","sheet":{"row":18,"id":"m50222683038","name":"JIMMY CHOO　パンプス　赤色","cost":"1万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m63611494310","name":"【美品】DIOR オブリーク デニムジャケット","price":120000,"status":"on_sale","statusLabel":"出品中","likes":4,"comments":0,"views":418,"recentViews":206,"category":"Gジャン・デニムジャケット","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m63611494310_1.jpg?1786892997","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m63611494310","createdAt":"2026-08-16T15:09:57.000Z","updatedAt":"2026-10-31T01:38:24.000Z","sheet":{"row":19,"id":"m63611494310","name":"DIOR　ジャケット","cost":"15万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m84622557367","name":"LOUIS VUITTON モノグラム スウェット ライムグリーン","price":180000,"status":"on_sale","statusLabel":"出品中","likes":2,"comments":0,"views":548,"recentViews":273,"category":"トレーナー・スウェット","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m84622557367_1.jpg?1786893116","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m84622557367","createdAt":"2026-08-16T15:11:56.000Z","updatedAt":"2026-10-31T01:38:07.000Z","sheet":{"row":20,"id":"m84622557367","name":"ルイヴィトン　黄色　スウェット","cost":"20万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m16204832658","name":"LOUIS VUITTON モノグラム デニムシャツ 半袖","price":220000,"status":"on_sale","statusLabel":"出品中","likes":2,"comments":0,"views":1218,"recentViews":483,"category":"その他","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m16204832658_1.jpg?1786893241","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m16204832658","createdAt":"2026-08-16T15:14:01.000Z","updatedAt":"2026-10-31T01:37:54.000Z","sheet":{"row":22,"id":"m16204832658","name":"ルイヴィトン　デニムジャケット","cost":"35万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m78499073700","name":"ジェラートピケ ハート柄 カーディガン ショートパンツ セット","price":8500,"status":"on_sale","statusLabel":"出品中","likes":11,"comments":0,"views":220,"recentViews":18,"category":"その他","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m78499073700_1.jpg?1792419997","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m78499073700","createdAt":"2026-10-19T14:26:37.000Z","updatedAt":"2026-10-31T01:37:38.000Z","sheet":{"row":26,"id":"m78499073700","name":"ジェラピケ","cost":"8000","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m38663759412","name":"【超美品】GERMAN TRAINeR スニーカー 黒 27.5cm","price":6500,"status":"on_sale","statusLabel":"出品中","likes":12,"comments":0,"views":246,"recentViews":27,"category":"スニーカー","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m38663759412_1.jpg?1785372230","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m38663759412","createdAt":"2026-07-28T14:28:27.000Z","updatedAt":"2026-10-31T01:37:24.000Z","sheet":{"row":17,"id":"m38663759412","name":"GERMAN TRAINeR　黒　1回着用","cost":"1万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m78465092543","name":"Apple MacBook Air 本体","price":55000,"status":"on_sale","statusLabel":"出品中","likes":2,"comments":2,"views":331,"recentViews":48,"category":"MacBook本体","rootCategory":"スマホ・タブレット・パソコン","image":"https://static.mercdn.net/thumb/item/jpeg/m78465092543_1.jpg?1789457197","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m78465092543","createdAt":"2026-08-02T19:41:24.000Z","updatedAt":"2026-10-31T01:37:05.000Z","sheet":{"row":15,"id":"m78465092543","name":"Macbook","cost":"15万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m57278834765","name":"【美品】GUCCI Firenze 1921 ロゴ パーカー ホワイト","price":40000,"status":"on_sale","statusLabel":"出品中","likes":0,"comments":0,"views":4806,"recentViews":215,"category":"パーカー","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m57278834765_1.jpg?1786943749","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m57278834765","createdAt":"2026-08-17T05:15:49.000Z","updatedAt":"2026-10-31T01:36:46.000Z","sheet":{"row":24,"id":"m57278834765","name":"Gucci　パーカー　白色","cost":"15万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}},{"id":"m47071055200","name":"【美品】LOEWE 刺繍ロゴ スウェット ブラック","price":50000,"status":"on_sale","statusLabel":"出品中","likes":1,"comments":0,"views":643,"recentViews":12,"category":"トレーナー・スウェット","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m47071055200_1.jpg?1792419973","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m47071055200","createdAt":"2026-10-19T14:26:13.000Z","updatedAt":"2026-10-29T09:57:40.000Z","sheet":{"row":25,"id":"m47071055200","name":"LOEWEスウェット","cost":"8万","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null}}],"trading":[{"id":"m62394520529","name":"【未使用】KINUI カームセブン 美容液 30ml","price":2300,"status":"trading","statusLabel":"取引中","likes":6,"comments":0,"views":100,"recentViews":0,"category":"美容液","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m62394520529_1.jpg?1792900810","transactionStatus":"wait_review","boosted":false,"url":"https://jp.mercari.com/transaction/m62394520529","createdAt":"2026-10-25T04:00:10.000Z","updatedAt":"2026-10-30T22:27:56.000Z","sheet":{"row":27,"id":"m62394520529","name":"カームセブン","cost":"","fee":700,"sales":2300,"profit":2070,"payout":1370,"soldCheck":true,"unsold":null}}],"sold":[{"id":"m85450047721","name":"【新品】Silky Bust Cream シルキーバストクリーム2個セット","price":7800,"status":"sold_out","statusLabel":"売却済み","likes":2,"comments":0,"views":62,"recentViews":0,"category":"バストケア","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m85450047721_1.jpg?1792850547","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m85450047721","createdAt":"2026-08-12T10:26:01.000Z","updatedAt":"2026-10-29T12:14:39.000Z","sheet":{"row":16,"id":"m85450047721","name":"シルキーバストクリーム２個","cost":"？","fee":700,"sales":7800,"profit":7020,"payout":6320,"soldCheck":true,"unsold":null}},{"id":"m15160356943","name":"【未使用】Cartier ジュストアンクル ネックレス ダイヤモンド","price":470000,"status":"sold_out","statusLabel":"売却済み","likes":10,"comments":6,"views":417,"recentViews":0,"category":"ネックレス","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m15160356943_1.jpg?1792419938","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m15160356943","createdAt":"2026-10-19T14:25:38.000Z","updatedAt":"2026-10-29T11:08:49.000Z","sheet":{"row":12,"id":"m15160356943","name":"Cartier","cost":"50万円","fee":1000,"sales":470000,"profit":423000,"payout":422000,"soldCheck":true,"unsold":null}},{"id":"m24307387125","name":"【新品】Dior SAUVAGE パルファン 60ml 香水 本体","price":8500,"status":"sold_out","statusLabel":"売却済み","likes":5,"comments":5,"views":558,"recentViews":0,"category":"香水(ユニセックス)","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m24307387125_1.jpg?1786699545","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m24307387125","createdAt":"2026-08-14T09:25:45.000Z","updatedAt":"2026-10-28T22:08:17.000Z","sheet":{"row":23,"id":"m24307387125","name":"Dior　ソバージュ　香水　新品","cost":"1万円","fee":700,"sales":8500,"profit":6920,"payout":6220,"soldCheck":true,"unsold":null}},{"id":"m61213973582","name":"【新品】SIMUTE 薬用ホワイトニングクリーム 30g 2本セット","price":4000,"status":"sold_out","statusLabel":"売却済み","likes":2,"comments":0,"views":59,"recentViews":0,"category":"フェイスクリーム","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m61213973582_1.jpg?1786530417","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m61213973582","createdAt":"2026-08-12T10:26:57.000Z","updatedAt":"2026-10-26T10:09:07.000Z","sheet":{"row":10,"id":"m61213973582","name":"シミュート２個","cost":"？","fee":700,"sales":4000,"profit":3600,"payout":2900,"soldCheck":true,"unsold":null}},{"id":"m82242209625","name":"【美品】くまモン フェイスタオル まとめ売り","price":2000,"status":"sold_out","statusLabel":"売却済み","likes":0,"comments":0,"views":65,"recentViews":0,"category":"フェイスタオル","rootCategory":"キッチン・日用品・その他","image":"https://static.mercdn.net/thumb/item/jpeg/m82242209625_1.jpg?1786893946","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m82242209625","createdAt":"2026-08-16T15:25:46.000Z","updatedAt":"2026-10-25T08:39:51.000Z","sheet":{"row":7,"id":"m82242209625","name":"くまモンハンカチセット＋おまけ","cost":"3千円","fee":700,"sales":2000,"profit":1050,"payout":350,"soldCheck":true,"unsold":null}},{"id":"m27752373854","name":"【新品】KIRA TOTH キラトス ホワイトニング 歯磨き粉 50g","price":2400,"status":"sold_out","statusLabel":"売却済み","likes":0,"comments":0,"views":64,"recentViews":0,"category":"歯磨き粉","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m27752373854_1.jpg?1786530455","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m27752373854","createdAt":"2026-08-12T10:27:35.000Z","updatedAt":"2026-10-25T05:04:46.000Z","sheet":{"row":8,"id":"m27752373854","name":"KIRATOTH１個","cost":"？","fee":700,"sales":2400,"profit":1950,"payout":1250,"soldCheck":true,"unsold":null}},{"id":"m42500772744","name":"【未使用】TIFFANY&Co. Tスマイル ネックレス ペンダント","price":109800,"status":"sold_out","statusLabel":"売却済み","likes":8,"comments":9,"views":527,"recentViews":0,"category":"ネックレス","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m42500772744_1.jpg?1792419873","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m42500772744","createdAt":"2026-10-19T14:24:33.000Z","updatedAt":"2026-10-24T02:32:59.000Z","sheet":{"row":13,"id":"m42500772744","name":"ティファニーネックレス","cost":"10万円","fee":1000,"sales":109800,"profit":98090,"payout":97090,"soldCheck":true,"unsold":null}},{"id":"m99722053660","name":"DIOR オブリーク レザー クラッチバッグ ブラック","price":75000,"status":"sold_out","statusLabel":"売却済み","likes":1,"comments":0,"views":217,"recentViews":0,"category":"クラッチバッグ","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m99722053660_1.jpg?1792419958","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m99722053660","createdAt":"2026-10-19T14:25:58.000Z","updatedAt":"2026-10-23T22:43:59.000Z","sheet":{"row":14,"id":"m99722053660","name":"DIORクラッチバッグ","cost":"8万","fee":1000,"sales":75000,"profit":67290,"payout":66290,"soldCheck":true,"unsold":null}},{"id":"m71149810146","name":"【未使用級】LE TALON ル タロン ブラック 24.5cm","price":8000,"status":"sold_out","statusLabel":"売却済み","likes":5,"comments":0,"views":128,"recentViews":0,"category":"ハイヒール・パンプス","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m71149810146_1.jpg?1785386153","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m71149810146","createdAt":"2026-07-30T04:35:53.000Z","updatedAt":"2026-10-23T13:28:23.000Z","sheet":{"row":6,"id":"m71149810146","name":"LE TALON　黒　パンプス","cost":"1千円","fee":1000,"sales":8000,"profit":6470,"payout":5470,"soldCheck":true,"unsold":null}},{"id":"m19347069518","name":"【美品】MICHAEL KORS 腕時計","price":7000,"status":"sold_out","statusLabel":"売却済み","likes":6,"comments":0,"views":343,"recentViews":0,"category":"その他","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m19347069518_1.jpg?1786699689","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m19347069518","createdAt":"2026-08-14T09:28:09.000Z","updatedAt":"2026-10-22T10:50:32.000Z","sheet":{"row":11,"id":"m19347069518","name":"マイケルコース　金色　時計","cost":"1万円","fee":700,"sales":7000,"profit":5550,"payout":4850,"soldCheck":true,"unsold":null}},{"id":"m29862755137","name":"【Apple純正】12.9インチ iPad Pro用Magic Keyboard","price":15000,"status":"sold_out","statusLabel":"売却済み","likes":1,"comments":0,"views":91,"recentViews":0,"category":"iPadケース","rootCategory":"スマホ・タブレット・パソコン","image":"https://static.mercdn.net/thumb/item/jpeg/m29862755137_1.jpg?1785999223","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m29862755137","createdAt":"2026-07-30T05:07:38.000Z","updatedAt":"2026-10-22T06:55:58.000Z","sheet":{"row":5,"id":"m29862755137","name":"iPadのキーボードみたいなやつ","cost":"2万円","fee":1000,"sales":15000,"profit":13290,"payout":12290,"soldCheck":true,"unsold":null}},{"id":"m25152591286","name":"【新品】&meu ダーマ ニードルセラム VC 美容液 25ml","price":3890,"status":"sold_out","statusLabel":"売却済み","likes":2,"comments":0,"views":0,"recentViews":0,"category":"美容液","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m25152591286_1.jpg?1786530436","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m25152591286","createdAt":"2026-08-12T10:27:16.000Z","updatedAt":"2026-09-18T22:45:36.000Z","sheet":{"row":9,"id":"m25152591286","name":"&meu１個","cost":"？","fee":700,"sales":3890,"profit":3291,"payout":2591,"soldCheck":true,"unsold":null}},{"id":"m39222663505","name":"YAMAHA VOCALOID4 Editor for CUBASE 本体","price":25290,"status":"sold_out","statusLabel":"売却済み","likes":1,"comments":3,"views":0,"recentViews":0,"category":"ボーカロイド(vocaloid)","rootCategory":"ホビー・楽器・アート","image":"https://static.mercdn.net/thumb/item/jpeg/m39222663505_1.jpg?1785421595","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m39222663505","createdAt":"2026-07-30T14:24:26.000Z","updatedAt":"2026-08-16T07:18:09.000Z","sheet":{"row":3,"id":"m39222663505","name":"YAMAHA VOCALOID4","cost":"2万円","fee":700,"sales":25290,"profit":22761,"payout":22061,"soldCheck":true,"unsold":null}},{"id":"m76940669179","name":"【ほぼ新品】adidas SUPERSTAR アディダス スーパースター 白黒","price":8500,"status":"sold_out","statusLabel":"売却済み","likes":15,"comments":3,"views":0,"recentViews":0,"category":"スニーカー","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m76940669179_1.jpg?1785375635","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m76940669179","createdAt":"2026-07-28T10:16:28.000Z","updatedAt":"2026-08-11T04:35:25.000Z","sheet":{"row":2,"id":"m76940669179","name":"adidas　靴　白　新品","cost":"1万円","fee":1000,"sales":8500,"profit":6920,"payout":5920,"soldCheck":true,"unsold":null}},{"id":"m98822991827","name":"【新品未使用】シルクリスタファンデーション　SPF32 PA+++ ×2箱","price":4000,"status":"sold_out","statusLabel":"売却済み","likes":2,"comments":0,"views":0,"recentViews":0,"category":"その他","rootCategory":"コスメ・美容","image":"https://static.mercdn.net/thumb/item/jpeg/m98822991827_1.jpg?1785987119","transactionStatus":"done","boosted":false,"url":"https://jp.mercari.com/transaction/m98822991827","createdAt":"2026-08-06T03:31:59.000Z","updatedAt":"2026-08-09T05:31:08.000Z","sheet":{"row":4,"id":"m98822991827","name":"SILKRYSTA２個","cost":"？","fee":700,"sales":4000,"profit":3390,"payout":2690,"soldCheck":true,"unsold":null}}],"changes":{"added":[],"sold":[],"removed":[],"priceChanged":[],"likeChanged":[],"viewChanged":[{"id":"m38663759412","name":"【超美品】GERMAN TRAINeR スニーカー 黒 27.5cm","price":6500,"status":"on_sale","statusLabel":"出品中","likes":12,"comments":0,"views":246,"recentViews":27,"category":"スニーカー","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m38663759412_1.jpg?1785372230","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m38663759412","createdAt":"2026-07-28T14:28:27.000Z","updatedAt":"2026-10-31T01:37:24.000Z","sheet":{"row":17,"id":"m38663759412","name":"GERMAN TRAINeR　黒　1回着用","cost":"1万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null},"prevViews":245},{"id":"m78465092543","name":"Apple MacBook Air 本体","price":55000,"status":"on_sale","statusLabel":"出品中","likes":2,"comments":2,"views":331,"recentViews":48,"category":"MacBook本体","rootCategory":"スマホ・タブレット・パソコン","image":"https://static.mercdn.net/thumb/item/jpeg/m78465092543_1.jpg?1789457197","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m78465092543","createdAt":"2026-08-02T19:41:24.000Z","updatedAt":"2026-10-31T01:37:05.000Z","sheet":{"row":15,"id":"m78465092543","name":"Macbook","cost":"15万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null},"prevViews":327},{"id":"m57278834765","name":"【美品】GUCCI Firenze 1921 ロゴ パーカー ホワイト","price":40000,"status":"on_sale","statusLabel":"出品中","likes":0,"comments":0,"views":4806,"recentViews":215,"category":"パーカー","rootCategory":"ファッション","image":"https://static.mercdn.net/thumb/item/jpeg/m57278834765_1.jpg?1786943749","transactionStatus":null,"boosted":false,"url":"https://jp.mercari.com/item/m57278834765","createdAt":"2026-08-17T05:15:49.000Z","updatedAt":"2026-10-31T01:36:46.000Z","sheet":{"row":24,"id":"m57278834765","name":"Gucci　パーカー　白色","cost":"15万円","fee":1000,"sales":null,"profit":null,"payout":-1000,"soldCheck":false,"unsold":null},"prevViews":4804}],"completed":[],"commented":[]},"prevFetchedAt":"2026-10-31T06:02:21.706Z","watchlist":{"url":"https://docs.google.com/spreadsheets/d/1FCJxJwl3TIejHAPncxy5kh59XOWZjjrLlKY91VzTYOs/edit?gid=0","fetchedAt":"2026-10-31T06:12:16.571Z","total":28,"stale":false,"error":null,"notFound":[{"row":28,"id":null,"name":"ANKER モバイルバッテリー","cost":"7千円","fee":700,"sales":null,"profit":null,"payout":-700,"soldCheck":false,"unsold":null},{"row":29,"id":null,"name":"","cost":"","fee":null,"sales":null,"profit":null,"payout":0,"soldCheck":false,"unsold":null}]}},"fetchedAt":"2026-10-31T06:12:20.882Z"};</script>
+<div id="gate" hidden>
+  <form id="gateForm" class="gateBox">
+    <h2>メルカリ出品モニター</h2>
+    <p>パスコードを入力してください</p>
+    <input id="gateInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="パスコード" />
+    <button type="submit" class="primary">開く</button>
+    <div id="gateErr" class="gateErr"></div>
+  </form>
+</div>
+<script>
+// 背景色（ライト/ダーク）。選択は localStorage に保存
+(function () {
+  let t = null;
+  try { t = localStorage.getItem("theme"); } catch {}
+  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+})();
+function currentTheme() {
+  const t = document.documentElement.dataset.theme;
+  if (t) return t;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function applyThemeButton() {
+  const b = document.getElementById("btnTheme");
+  const dark = currentTheme() === "dark";
+  b.textContent = dark ? "☀️" : "🌙";
+  b.title = dark ? "明るい背景にする" : "暗い背景にする";
+}
+const $ = (id) => document.getElementById(id);
+let data = null, status = null, refreshMinutes = 10, tab = "all";
+const yen = (n) => n == null ? "–" : "¥" + Number(n).toLocaleString("ja-JP");
+const rel = (iso) => {
+  if (!iso) return "–";
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 60) return "たった今";
+  if (s < 3600) return Math.floor(s / 60) + "分前";
+  if (s < 86400) return Math.floor(s / 3600) + "時間前";
+  return Math.floor(s / 86400) + "日前";
+};
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const STATIC = window.__STATIC__ || null;
+
+async function load() {
+  if (STATIC) return loadStatic();
+  try {
+    const r = await fetch("/api/listings");
+    const j = await r.json();
+    data = j.listings; status = j.status; refreshMinutes = j.refreshMinutes;
+    render(j);
+  } catch (e) {
+    $("meta").textContent = "サーバーに接続できません（npm start を確認）";
+  }
+}
+
+// ---- 共有ページ（Netlifyに置く静的版）----
+async function loadStatic() {
+  document.body.classList.add("static");
+  tab = "items"; // 共有ページは出品中のみ
+  let listings = STATIC.listings;
+  if (STATIC.encrypted) {
+    let pass = null;
+    try { pass = localStorage.getItem("sharePass"); } catch {}
+    if (pass) listings = await decryptBlob(STATIC.blob, pass).catch(() => null);
+    if (!listings) {
+      listings = await askPasscode();
+    }
+  }
+  data = listings; status = {}; refreshMinutes = 10;
+  render({ listings, status: {}, refreshMinutes: 10, lineNotify: false });
+  $("meta").textContent = `最終取得: ${new Date(listings.fetchedAt).toLocaleString("ja-JP")}（${rel(listings.fetchedAt)}）`;
+  $("footer").textContent = "10分ごとに自動更新。最新を見るにはページを再読み込みしてください";
+}
+
+function askPasscode() {
+  return new Promise((resolve) => {
+    const g = $("gate");
+    g.hidden = false;
+    $("gateInput").focus();
+    $("gateForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const pass = $("gateInput").value.trim();
+      try {
+        const listings = await decryptBlob(STATIC.blob, pass);
+        try { localStorage.setItem("sharePass", pass); } catch {}
+        g.hidden = true;
+        resolve(listings);
+      } catch {
+        $("gateErr").textContent = "パスコードが違います";
+      }
+    };
+  });
+}
+
+async function decryptBlob(blob, pass) {
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const keyMat = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64(blob.salt), iterations: blob.iterations, hash: "SHA-256" },
+    keyMat, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+  );
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(blob.iv) }, key, b64(blob.data));
+  return JSON.parse(new TextDecoder().decode(plain)).listings;
+}
+
+function render(j) {
+  const L = j.listings;
+  const busy = status.fetching;
+  $("meta").innerHTML = L
+    ? `最終取得: ${new Date(L.fetchedAt).toLocaleString("ja-JP")}（${rel(L.fetchedAt)}）${busy ? ' <span class="spin"></span> 取得中' : ""}`
+    : busy ? '<span class="spin"></span> 初回取得中…' : "データなし";
+  $("btnRefresh").disabled = busy;
+
+  const al = $("alert");
+  if (status.needLogin) {
+    al.hidden = false;
+    al.innerHTML = "メルカリのログインが切れています。ターミナルで <code>npm run login</code> を実行してログインし直してください。";
+  } else if (status.lastFetchError) {
+    al.hidden = false;
+    al.textContent = "取得エラー: " + status.lastFetchError;
+  } else al.hidden = true;
+
+  if (L) {
+    $("tCount").innerHTML = `${L.count}<small>件</small>`;
+    $("tTrading").innerHTML = `${L.trading?.length ?? 0}<small>件</small>`;
+    $("tSoldTotal").innerHTML = `${L.sold?.length ?? 0}<small>件</small>`;
+    renderList();
+    renderChanges(L.changes);
+  }
+
+  const W = L?.watchlist;
+  const bar = $("wlBar");
+  if (W) {
+    bar.hidden = false;
+    bar.innerHTML = `<span>対象: <a href="${esc(W.url)}" target="_blank" rel="noopener">スプレッドシート</a>の ${W.total}件</span>` +
+      (() => {
+        const nf = W.notFound || [];
+        const unsold = nf.filter((e) => e.unsold || !e.id);
+        const missing = nf.filter((e) => !(e.unsold || !e.id));
+        const names = (a) => a.map((e) => esc(e.name || "行" + e.row)).join("、");
+        return (unsold.length ? `<span>未出品（URL未記入）: ${unsold.length}件（${names(unsold)}）</span>` : "") +
+          (missing.length ? `<span class="warn">URLはあるがメルカリ上で見つからない: ${missing.length}件（${names(missing)}）</span>` : "");
+      })() +
+      (W.stale ? `<span class="warn">⚠ シートが読めず前回のリストを使用中: ${esc(W.error || "")}</span>` : "");
+  } else bar.hidden = true;
+
+  $("footer").textContent = `自動更新: ${refreshMinutes}分ごと` + (status.nextFetchAt ? `（次回 ${new Date(status.nextFetchAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}）` : "") + `　LINE通知: ${j.lineNotify ? "ON" : "未設定"}` + (j.shareUrl ? `　共有ページ: ${j.shareUrl}` : "");
+}
+
+function renderList() {
+  const q = $("q").value.trim().toLowerCase();
+  const sort = $("sort").value;
+  const ch = data.changes || {};
+  const addedIds = new Set((ch.added || []).map((i) => i.id));
+  const priceMap = new Map((ch.priceChanged || []).map((i) => [i.id, i.prevPrice]));
+  const likeMap = new Map((ch.likeChanged || []).map((i) => [i.id, i.prevLikes]));
+  const viewMap = new Map((ch.viewChanged || []).map((i) => [i.id, i.prevViews]));
+  const src =
+    tab === "all" ? [...data.items, ...(data.trading || []), ...(data.sold || [])]
+    : tab === "items" ? data.items
+    : tab === "trading" ? (data.trading || [])
+    : (data.sold || []);
+  let items = src.filter((i) => !q || (i.name || "").toLowerCase().includes(q));
+  const cmp = {
+    updated: (a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""),
+    likes: (a, b) => (b.likes || 0) - (a.likes || 0),
+    views: (a, b) => (b.views || 0) - (a.views || 0),
+    recent: (a, b) => (b.recentViews || 0) - (a.recentViews || 0),
+    oldest: (a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""),
+    priceDesc: (a, b) => (b.price || 0) - (a.price || 0),
+    priceAsc: (a, b) => (a.price || 0) - (b.price || 0),
+    name: (a, b) => (a.name || "").localeCompare(b.name || "", "ja"),
+  }[sort];
+  items.sort(cmp);
+  $("listMeta").textContent = q ? `${items.length} / ${src.length}件` : `${src.length}件`;
+  if (!items.length) { $("list").innerHTML = '<div class="empty">該当なし</div>'; return; }
+  const LOW_LIKES = 3;
+  const daysSince = (iso) => iso ? Math.floor((Date.now() - new Date(iso)) / 86400000) : null;
+  $("list").innerHTML = `<table><thead><tr>
+    <th>商品</th><th class="num">価格</th><th class="num">いいね</th><th class="num">閲覧<br><small>(直近)</small></th>${tab === "items" || tab === "all" ? "<th>出品から</th>" : "<th>更新</th>"}
+  </tr></thead><tbody>${items.map((i) => {
+    const chips = [];
+    const isOnSale = i.status === "on_sale";
+    if (tab === "all" && i.status === "trading") chips.push('<span class="chip up">取引中</span>');
+    if (tab === "all" && i.status === "sold_out") chips.push('<span class="chip new">売却済み</span>');
+    if (isOnSale && addedIds.has(i.id)) chips.push('<span class="chip new">NEW</span>');
+    if (isOnSale && priceMap.has(i.id)) chips.push(`<span class="chip ${i.price < priceMap.get(i.id) ? "down" : "up"}">${yen(priceMap.get(i.id))}→</span>`);
+    if (isOnSale && likeMap.has(i.id)) { const d = i.likes - likeMap.get(i.id); chips.push(`<span class="chip ${d > 0 ? "new" : ""}">いいね${d > 0 ? "+" : ""}${d}</span>`); }
+    if (isOnSale && viewMap.has(i.id)) { const d = i.views - viewMap.get(i.id); if (d > 0) chips.push(`<span class="chip">閲覧+${d}</span>`); }
+    if (i.boosted) chips.push('<span class="chip up">露出UP中</span>');
+    if (i.status === "trading" && i.transactionStatus) chips.push(`<span class="chip">${esc(txLabel(i.transactionStatus))}</span>`);
+    if (i.sheet && i.status === "sold_out" && i.sheet.soldCheck === false) chips.push('<span class="chip up">シート未チェック</span>');
+    if (i.sheet && isOnSale && i.sheet.soldCheck === true) chips.push('<span class="chip up">シートは売れた扱い</span>');
+    const d = daysSince(i.createdAt);
+    const rowClass = i.status === "trading" ? "row-trading" : i.status === "sold_out" ? "row-sold" : "";
+    const lowLike = isOnSale && i.likes != null && i.likes <= LOW_LIKES;
+    return `<tr class="${rowClass}">
+      <td><div class="item">${i.image ? `<img src="${esc(i.image)}" alt="" loading="lazy">` : '<div class="ph"></div>'}<div><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name) || i.id}</a>${chips.join("")}<div class="sub">${i.sheet ? `📋 ${esc(i.sheet.name)}${i.sheet.cost ? `（元値 ${esc(i.sheet.cost)}）` : ""} ・ ` : ""}${esc(i.category || "")}</div></div></div></td>
+      <td class="num">${yen(i.price)}</td>
+      <td class="num">${lowLike ? `<span class="low" title="いいねが少ない">${i.likes}</span>` : (i.likes ?? "–")}</td>
+      <td class="num">${i.views ?? "–"}${i.recentViews != null ? ` <small>(${i.recentViews})</small>` : ""}</td>
+      <td>${tab === "items" || tab === "all" ? (d == null ? "–" : d === 0 ? "今日" : d + "日") : (i.updatedAt ? rel(i.updatedAt) : "–")}</td>
+    </tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+function txLabel(s) {
+  return { wait_payment: "支払い待ち", wait_shipping: "発送待ち", wait_review: "受取評価待ち", wait_review_by_seller: "評価待ち(自分)", done: "完了" }[s] || s;
+}
+
+function renderChanges(ch) {
+  if (!ch) return;
+  const sec = (title, arr, fmt) => arr?.length ? `<h3>${title}（${arr.length}）</h3><ul>${arr.map(fmt).join("")}</ul>` : "";
+  const li = (i, extra = "") => `<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.name) || i.id}</a> ${yen(i.price)}${extra}</li>`;
+  const html =
+    sec("新しく出品", ch.added, (i) => li(i)) +
+    sec("売れた🎉", ch.sold, (i) => li(i)) +
+    sec("取り下げ・削除", ch.removed, (i) => li(i)) +
+    sec("価格変更", ch.priceChanged, (i) => li(i, ` <span class="chip">${yen(i.prevPrice)} →</span>`)) +
+    sec("いいね変動", ch.likeChanged, (i) => li(i, ` <span class="chip">${i.prevLikes} → ${i.likes}</span>`)) +
+    sec("閲覧が増えた", (ch.viewChanged || []).filter((i) => i.views > i.prevViews).sort((a, b) => (b.views - b.prevViews) - (a.views - a.prevViews)).slice(0, 8), (i) => li(i, ` <span class="chip">+${i.views - i.prevViews}</span>`));
+  $("changes").innerHTML = html || `<div class="empty">変化なし${data.prevFetchedAt ? `（前回 ${rel(data.prevFetchedAt)}と比較）` : ""}</div>`;
+}
+
+$("btnRefresh").onclick = async () => { await fetch("/api/refresh", { method: "POST" }); setTimeout(load, 500); };
+$("q").oninput = renderList;
+$("btnTheme").onclick = () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("theme", next); } catch {}
+  applyThemeButton();
+};
+applyThemeButton();
+$("tabs").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; tab = b.dataset.tab; [...$("tabs").children].forEach((x) => x.classList.toggle("on", x === b)); renderList(); };
+$("sort").onchange = renderList;
+
+load();
+if (!STATIC) setInterval(load, 15000); // 15秒ごとに最新を取りに行く（取得中は進行表示が更新される）
+</script>
+</body>
+</html>
